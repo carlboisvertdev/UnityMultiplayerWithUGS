@@ -7,38 +7,13 @@ namespace Game
 {
     public class Door : NetworkBehaviour
     {
-        [SerializeField] private List<Switch> _switches;
-        [SerializeField] private NetworkAnimator _animCtrl;
-
-        private Dictionary<Switch, bool> _activeSwitches = new Dictionary<Switch, bool>();
         
-        public override void OnNetworkSpawn()
-        {
-            base.OnNetworkSpawn();
-            if (IsServer)
-            {
-                foreach (Switch doorSwitch in _switches)
-                {
-                    doorSwitch.OnSwitchChanged += OnSwitchChanged;
-                    _activeSwitches.Add(doorSwitch, false);
-                }
-            }
-        }
+        [SerializeField] protected NetworkAnimator _animCtrl;
 
-        private void OnSwitchChanged(Switch doorswitch, bool isactive)
-        {
-            _activeSwitches[doorswitch] = isactive;
+        
+        
+        
 
-            foreach (var doorSwitch in _switches)
-            {
-                if (!_activeSwitches[doorSwitch])
-                {
-                    return;
-                }
-            }
-            
-            Debug.Log("Open the door");
-            _animCtrl.SetTrigger("OpenDoor");
-        }
+        
     }
 }

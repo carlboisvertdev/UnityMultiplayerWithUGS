@@ -199,6 +199,10 @@ MonoBehaviour:
   _minMaxRotationX: {x: 90, y: -90}
   _camTransform: {fileID: 6903959063276953788}
   _playerMovement: {fileID: 7984286079122206572}
+  _interactDistance: 10
+  _interactionLayer:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!114 &7984286079122206572
 MonoBehaviour:
   m_ObjectHideFlags: 0

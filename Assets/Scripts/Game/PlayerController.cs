@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
+using Game;
 using GameFramework.Network.Movement;
 using Unity.Netcode;
 using UnityEngine;
@@ -11,6 +12,8 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private Vector2 _minMaxRotationX;
     [SerializeField] private Transform _camTransform;
     [SerializeField] private NetworkMovementComponent _playerMovement;
+    [SerializeField] private float _interactDistance;
+    [SerializeField] private LayerMask _interactionLayer;
 
     private CharacterController _cc;
     private PlayerControl _playerControl;
@@ -53,7 +56,31 @@ public class PlayerController : NetworkBehaviour
         } else
         {
             _playerMovement.ProcessSimulatedPlayerMovement();
-        } 
+        }
+
+
+        if (IsLocalPlayer && _playerControl.Player.Interact.inProgress)
+        {
+            if (Physics.Raycast(_camTransform.position, _camTransform.forward, out RaycastHit hit, _interactDistance, _interactionLayer))
+            {
+                if (hit.collider.TryGetComponent<ButtonDoor>(out ButtonDoor buttonDoor))
+                {
+                    UseButtonServerRpc();
+                }
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void UseButtonServerRpc()
+    {
+        if (Physics.Raycast(_camTransform.position, _camTransform.forward, out RaycastHit hit, _interactDistance, _interactionLayer))
+        {
+            if (hit.collider.TryGetComponent<ButtonDoor>(out ButtonDoor buttonDoor))
+            {
+                buttonDoor.Activate();
+            }
+        }
     }
 
     /*private void RotateCamera(Vector2 lookInput)
