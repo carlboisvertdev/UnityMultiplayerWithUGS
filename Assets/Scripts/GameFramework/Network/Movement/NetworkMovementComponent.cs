@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -15,6 +17,9 @@ namespace GameFramework.Network.Movement
         [SerializeField] private Transform _camSocket;
         [SerializeField] private GameObject _vcam;
 
+        [SerializeField] private MeshFilter _meshFilter;
+        [SerializeField] private Color _color;
+
         private Transform _vcamTransform;
 
         private int _tick = 0;
@@ -27,6 +32,8 @@ namespace GameFramework.Network.Movement
 
         public NetworkVariable<TransformState> ServerTransformState = new NetworkVariable<TransformState>();
         public TransformState _previousTransformState;
+        
+        private int _lastProcessedTick = -0;
 
         private void OnEnable()
         {
@@ -39,9 +46,65 @@ namespace GameFramework.Network.Movement
             _vcamTransform = _vcam.transform;
         }
 
-        private void OnServerStateChanged(TransformState previousvalue, TransformState newvalue)
+        private void OnServerStateChanged(TransformState previousvalue, TransformState serverState)
         {
-            _previousTransformState = previousvalue;
+            if(!IsLocalPlayer) return;
+
+            if (_previousTransformState == null)
+            {
+                _previousTransformState = serverState;
+            }
+
+            TransformState calculatedState = _transformStates.First(localState => localState.Tick == serverState.Tick);
+            if (calculatedState.Position != serverState.Position)
+            {
+                Debug.Log("Correcting client position");
+                //Teleport the player to the server position
+                TeleportPlayer(serverState);
+                //Replay the inputs that happened after
+                IEnumerable<InputState> inputs = _inputStates.Where(input => input.Tick > serverState.Tick);
+                inputs = from input in inputs orderby input.Tick select input;
+                
+                foreach (InputState inputState in inputs)
+                {
+                    MovePlayer(inputState.MovementInput);
+                    RotatePlayer(inputState.LookInput);
+
+                    TransformState newTransformState = new TransformState()
+                    {
+                        Tick = inputState.Tick,
+                        Position = transform.position,
+                        Rotation = transform.rotation,
+                        HasStartedMoving = true
+                    };
+
+                    for (int i = 0; i < _transformStates.Length; i++)
+                    {
+                        if (_transformStates[i].Tick == inputState.Tick)
+                        {
+                            _transformStates[i] = newTransformState;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void TeleportPlayer(TransformState state)
+        {
+            _cc.enabled = false;
+            transform.position = state.Position;
+            transform.rotation = state.Rotation;
+            _cc.enabled = true;
+
+            for (int i = 0; i < _transformStates.Length; i++)
+            {
+                if (_transformStates[i].Tick == state.Tick)
+                {
+                    _transformStates[i] = state;
+                    break;
+                }
+            }
         }
 
         public void ProcessLocalPlayerMovement(Vector2 movementInput, Vector2 lookInput)
@@ -137,6 +200,13 @@ namespace GameFramework.Network.Movement
         [ServerRpc]
         private void MovePlayerServerRpc(int tick, Vector2 movementInput, Vector2 lookInput)
         {
+            if (_lastProcessedTick + 1 != tick)
+            {
+                Debug.Log("I missed a tick");
+                Debug.Log($"Received Tick {tick}");
+            }
+
+            _lastProcessedTick = tick;
             MovePlayer(movementInput);
             RotatePlayer(lookInput);
 
@@ -151,6 +221,15 @@ namespace GameFramework.Network.Movement
 
             _previousTransformState = ServerTransformState.Value;
             ServerTransformState.Value = state;
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (ServerTransformState.Value != null)
+            {
+                Gizmos.color = _color;
+                Gizmos.DrawMesh(_meshFilter.mesh, ServerTransformState.Value.Position);
+            }
         }
     }
 }

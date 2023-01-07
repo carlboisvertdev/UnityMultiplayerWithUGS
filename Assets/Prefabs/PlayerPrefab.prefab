@@ -220,6 +220,8 @@ MonoBehaviour:
   _turnSpeed: 15
   _camSocket: {fileID: 3414523381404613143}
   _vcam: {fileID: 3256106639317603099}
+  _meshFilter: {fileID: 794490222496693418}
+  _color: {r: 1, g: 0.5123978, b: 0.033018887, a: 0.74509805}
 --- !u!1 &3256106639317603099
 GameObject:
   m_ObjectHideFlags: 0
