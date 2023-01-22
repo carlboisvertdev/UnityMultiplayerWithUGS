@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using GameFramework.Events;
@@ -16,6 +17,19 @@ namespace GameFramework.Core.GameFramework.Manager
         private Lobby _lobby;
         private Coroutine _hearthbeatCoroutine;
         private Coroutine _refreshLobbyCoroutine;
+        private List<string> _joinedLobbiesId; 
+        
+        public async Task<bool> HasActiveLobbies()
+        {
+            _joinedLobbiesId = await LobbyService.Instance.GetJoinedLobbiesAsync();
+
+            if (_joinedLobbiesId.Count > 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
         
         public string GetLobbyCode()
         {
@@ -31,7 +45,7 @@ namespace GameFramework.Core.GameFramework.Manager
             {
                 Data = SerializeLobbyData(lobbyData),
                 IsPrivate = isPrivate,
-                Player = player
+                Player = player,
             };
 
             try
@@ -193,6 +207,40 @@ namespace GameFramework.Core.GameFramework.Manager
         public string GetHostId()
         {
             return _lobby.HostId;
+        }
+
+        public async Task<bool> RejoinLobby()
+        {
+            try
+            {
+                _lobby = await LobbyService.Instance.ReconnectToLobbyAsync(_joinedLobbiesId[0]);
+                LobbyEvents.OnLobbyUpdated(_lobby);
+            }
+            catch (System.Exception)
+            {
+                return false;
+            }
+
+            _refreshLobbyCoroutine = StartCoroutine(RefreshLobbyCoroutine(_joinedLobbiesId[0], 1f));
+            return true;
+        }
+
+        public async Task<bool> LeaveAllLobby()
+        {
+            string playerId = AuthenticationService.Instance.PlayerId;
+            foreach (string lobbyId in _joinedLobbiesId)
+            {
+                try
+                {
+                    await LobbyService.Instance.RemovePlayerAsync(lobbyId, playerId);
+                }
+                catch (System.Exception)
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
     }
 }

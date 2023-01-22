@@ -13,6 +13,8 @@ namespace Game
         [SerializeField] private GameObject _joinScreen;
         [SerializeField] private Button _hostButton;
         [SerializeField] private Button _joinButton;
+        [SerializeField] private Button _rejoinButton;
+        [SerializeField] private Button _leaveButton;
 
         [SerializeField] private Button _submitCodeButton;
         [SerializeField] private TextMeshProUGUI _codeText;
@@ -29,6 +31,39 @@ namespace Game
             _hostButton.onClick.RemoveListener(OnHostClicked);
             _joinButton.onClick.RemoveListener(OnJoinClicked);
             _submitCodeButton.onClick.RemoveListener(OnSubmitCodeClicked);
+        }
+
+        private async void Start()
+        {
+            if (await GameLobbyManager.Instance.HasActiveLobbies())
+            {
+                _hostButton.gameObject.SetActive(false);
+                _joinButton.gameObject.SetActive(false);
+                
+                _rejoinButton.gameObject.SetActive(true);
+                _leaveButton.gameObject.SetActive(true);
+                _rejoinButton.onClick.AddListener(OnRejoinGameClicked);
+                _leaveButton.onClick.AddListener(OnLeaveGameClicked);
+            }
+        }
+
+        private async void OnLeaveGameClicked()
+        {
+            bool succeeded = await GameLobbyManager.Instance.LeaveAllLobby();
+            
+            if (succeeded)
+            {
+                Debug.Log("All lobbies left");
+            }
+        }
+
+        private async void OnRejoinGameClicked()
+        {
+            bool succeeded = await GameLobbyManager.Instance.RejoinGame();
+            if (succeeded)
+            {
+                SceneManager.LoadSceneAsync("Lobby");
+            }
         }
 
         private async void OnHostClicked()
