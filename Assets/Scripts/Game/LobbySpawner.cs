@@ -9,8 +9,7 @@ namespace Game
     public class LobbySpawner : MonoBehaviour
     {
         [SerializeField] private List<LobbyPlayer> _players;
-
-
+        
         private void OnEnable()
         {
             LobbyEvents.OnLobbyUpdated += OnLobbyUpdated;
@@ -19,6 +18,11 @@ namespace Game
         private void OnDisable()
         {
             LobbyEvents.OnLobbyUpdated -= OnLobbyUpdated;
+        }
+
+        private void Start()
+        {
+            OnLobbyUpdated();
         }
 
         private void OnLobbyUpdated()

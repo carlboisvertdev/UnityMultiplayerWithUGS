@@ -13,11 +13,6 @@ namespace Game
         private MaterialPropertyBlock _propertyBlock;
         private LobbyPlayerData _data;
 
-        private void Start()
-        {
-            _propertyBlock = new MaterialPropertyBlock();
-        }
-
         public void SetData(LobbyPlayerData data)
         {
             _data = data;
@@ -27,6 +22,7 @@ namespace Game
             {
                 if (_isReadyRenderer != null)
                 {
+                    _propertyBlock = new MaterialPropertyBlock();
                     _isReadyRenderer.GetPropertyBlock(_propertyBlock);
                     _propertyBlock.SetColor("_BaseColor", Color.green);
                     _isReadyRenderer.SetPropertyBlock(_propertyBlock);

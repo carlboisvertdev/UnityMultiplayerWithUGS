@@ -119,6 +119,7 @@ namespace GameFramework.Network.Movement
                     MovePlayerServerRpc(_tick, movementInput, lookInput);
                     MovePlayer(movementInput);
                     RotatePlayer(lookInput);
+                    SaveState(movementInput, lookInput, bufferIndex);
                 }
                 else
                 {
@@ -133,29 +134,12 @@ namespace GameFramework.Network.Movement
                         HasStartedMoving = true
                     };
 
+                    SaveState(movementInput, lookInput, bufferIndex);
+
                     _previousTransformState = ServerTransformState.Value;
                     ServerTransformState.Value = state;
                 }
-
-
-                InputState inputState = new InputState()
-                {
-                    Tick = _tick,
-                    MovementInput = movementInput,
-                    LookInput = lookInput
-                };
-
-                TransformState transformState = new TransformState()
-                {
-                    Tick = _tick,
-                    Position = transform.position,
-                    Rotation = transform.rotation,
-                    HasStartedMoving = true
-                };
-
-                _inputStates[bufferIndex] = inputState;
-                _transformStates[bufferIndex] = transformState;
-
+                
                 _tickDeltaTime -= _tickRate;
                 _tick++;
             }
@@ -175,6 +159,27 @@ namespace GameFramework.Network.Movement
                 _tickDeltaTime -= _tickRate;
                 _tick++;
             }
+        }
+
+        private void SaveState(Vector2 movementInput, Vector2 lookInput, int bufferIndex)
+        {
+            InputState inputState = new InputState()
+            {
+                Tick = _tick,
+                MovementInput = movementInput,
+                LookInput = lookInput
+            };
+
+            TransformState transformState = new TransformState()
+            {
+                Tick = _tick,
+                Position = transform.position,
+                Rotation = transform.rotation,
+                HasStartedMoving = true
+            };
+
+            _inputStates[bufferIndex] = inputState;
+            _transformStates[bufferIndex] = transformState;
         }
 
         private void MovePlayer(Vector2 movementInput)

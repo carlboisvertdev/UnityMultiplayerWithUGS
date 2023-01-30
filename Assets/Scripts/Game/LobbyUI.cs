@@ -34,6 +34,9 @@ namespace Game
             }
             
             LobbyEvents.OnLobbyUpdated += OnLobbyUpdated;
+
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
 
         private void OnDisable()
